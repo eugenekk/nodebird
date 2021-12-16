@@ -2,7 +2,7 @@
 import PropTypes from 'prop-types';
 import Link from 'next/link';
 import { Menu, Input, Row, Col } from 'antd';
-import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import styled from 'styled-components';
 
 import UserProfile from '../components/UserProfile';
@@ -13,7 +13,8 @@ const SearchInput = styled(Input.Search)`
 `;
 
 const AppLayout = ({children}) => {
-    const [isLogin, setIsLogin] = useState(false);
+    const isLogin = useSelector((state) => state.user.isLogin);
+
     return (
         <div>
             <Menu mode="horizontal">
@@ -31,7 +32,7 @@ const AppLayout = ({children}) => {
             <Row gutter={8}>
                 {/* xs:모바일/sm:태블릿/md:작은데스크톱 */}
                 <Col xs={24} md={6}>
-                    {isLogin ? <UserProfile setIsLogin={setIsLogin}/> : <LoginForm setIsLogin={setIsLogin}/>}
+                    {isLogin ? <UserProfile/> : <LoginForm/>}
                 </Col>
                 <Col xs={24} md={12}>{children}</Col>
                 <Col xs={24} md={6}>
