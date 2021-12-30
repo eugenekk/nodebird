@@ -5,6 +5,7 @@ import { RetweetOutlined, HeartOutlined, MessageOutlined, EllipsisOutlined, Hear
 import PostImages from './PostImages';
 import { useCallback, useState } from 'react';
 import CommentForm from './CommentForm';
+import PostCardContent from './PostCardContent';
 
 const PostCard = ({ post }) =>{
     const id = useSelector((state) => state.user.me?.id);
@@ -42,7 +43,7 @@ const PostCard = ({ post }) =>{
                 <Card.Meta
                     avatar={<Avatar>{post.User.nickname[0]}</Avatar>}
                     title ={post.User.nickname}
-                    description={post.content}
+                    description={<PostCardContent postData = {post.content}/>}
                 />
             </Card>
             {commentFormOpened && (
