@@ -26,7 +26,7 @@ const SearchInput = styled(Input.Search)`
 `;
 
 const AppLayout = ({children}) => {
-    const isLogin = useSelector((state) => state.user.isLogin);
+    const { me } = useSelector((state) => state.user )
 
     return (
         <div>
@@ -47,7 +47,7 @@ const AppLayout = ({children}) => {
             <Row gutter={8}>
                 {/* xs:모바일/sm:태블릿/md:작은데스크톱 */}
                 <Col xs={24} md={6}>
-                    {isLogin ? <UserProfile/> : <LoginForm/>}
+                    {me ? <UserProfile/> : <LoginForm/>}
                 </Col>
                 <Col xs={24} md={12}>{children}</Col>
                 <Col xs={24} md={6}>
