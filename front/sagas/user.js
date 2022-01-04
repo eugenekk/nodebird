@@ -9,7 +9,7 @@ function logInAPI(data) {
 }
 function* logIn(action) {
     try{
-        console.log('saga login')
+        console.log('saga login', action.data)
         // const result = yield call(logInAPI, action.data);
         yield delay(1000);
         yield put({

@@ -2,24 +2,28 @@ import { Button, Form, Input } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import useInput from '../hooks/useInput';
-import { addPost } from '../reducers/post';
+import { ADD_POST_REQUEST  } from '../reducers/post';
 
 
 const PostForm = () => {
     const dispatch = useDispatch();
-    const { imagePaths, addPostDone } = useSelector((state) => state.post);
+    const { imagePaths, addPostDone, addPostLoading } = useSelector((state) => state.post);
     const [ text, onChangeText, setText] = useInput('')
-
+    
     useEffect(()=>{
         if(addPostDone){
             setText('')
         }
     }, [addPostDone]);
 
-    const onSubmit = useCallback(()=>{
-        // ADD_POST 액션실행
-        dispatch(addPost(text));
-    }, [text])
+    const onSubmit = useCallback(() => {
+        dispatch({
+          type: ADD_POST_REQUEST,
+          data: {
+            text,
+          },
+        });
+      }, []);
 
     //이미지 업로드
     const imageInput = useRef();
@@ -38,7 +42,7 @@ const PostForm = () => {
             <div>
                 <input type="file" multiple hidden ref={imageInput}/>
                 <Button onClick={onClickImageUpload} >이미지 업로드</Button>
-                <Button type='primary' style={{ float: 'right'}} htmlType='submit'>짹짹저장</Button>
+                <Button type='primary' style={{ float: 'right'}} htmlType='submit' loading={addPostLoading}>짹짹저장</Button>
             </div>
             {/* 이미지 미리보기 */}
             <div>

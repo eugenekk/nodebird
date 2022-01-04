@@ -1,22 +1,36 @@
 import PropTypes from 'prop-types';
 import { Avatar, Button, Card, Popover, List, Comment } from "antd";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RetweetOutlined, HeartOutlined, MessageOutlined, EllipsisOutlined, HeartTwoTone } from '@ant-design/icons'
 import PostImages from './PostImages';
 import { useCallback, useState } from 'react';
 import CommentForm from './CommentForm';
 import PostCardContent from './PostCardContent';
+import { REMOVE_POST_REQUEST, removePost } from '../reducers/post';
 
 const PostCard = ({ post }) =>{
+    const dispatch = useDispatch();
     const id = useSelector((state) => state.user.me?.id);
     const [liked, setLiked] = useState(false);
-    const [ commentFormOpened, setCommentFormOpened] = useState(false);
+    const [ commentFormOpened, setCommentFormOpened ] = useState(false);
+    const { removePostLoading } = useSelector((state) => state.post);
+
     const onToggleLike = useCallback(() => {
         setLiked((prev) => !prev);
       }, []);
-    const onToggleComment = useCallback(() =>{
+    
+      const onToggleComment = useCallback(() =>{
         setCommentFormOpened((prev) => !prev)
     }, []);
+
+    const onRemovePost = useCallback(() => {
+        // dispatch(removePost(post.id))
+        dispatch({
+            type : REMOVE_POST_REQUEST,
+            data : post.id,
+        });
+    }, []);
+
     return (
         <div style={{marginBottom:"20px"}}>
             <Card
@@ -31,7 +45,7 @@ const PostCard = ({ post }) =>{
                             {id && post.User.id === id ? (
                                 <>
                                 <Button>수정</Button>
-                                <Button type="danger">삭제</Button>
+                                <Button type="danger" onClick={onRemovePost} loading={removePostLoading}>삭제</Button>
                                 </>
                             ) : <Button>신고</Button>}
                         </Button.Group>

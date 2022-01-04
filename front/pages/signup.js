@@ -42,11 +42,7 @@ const Signup = () => {
             return setTermError(true);
         }
         console.log(email, nickname, password)
-        // dispatch(signupRequestAction({email, password, nickname}))
-        dispatch({
-            type : SIGN_UP_REQUEST,
-            data : { email, password, nickname }
-        })
+        dispatch(signupRequestAction({email, password, nickname}))
     }, [email, password, passwordCheck, term]);
     
     return (
