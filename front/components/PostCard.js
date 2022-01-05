@@ -6,7 +6,7 @@ import PostImages from './PostImages';
 import { useCallback, useState } from 'react';
 import CommentForm from './CommentForm';
 import PostCardContent from './PostCardContent';
-import { REMOVE_POST_REQUEST, removePost } from '../reducers/post';
+import { REMOVE_POST_REQUEST, removePostAction } from '../reducers/post';
 
 const PostCard = ({ post }) =>{
     const dispatch = useDispatch();
@@ -24,11 +24,11 @@ const PostCard = ({ post }) =>{
     }, []);
 
     const onRemovePost = useCallback(() => {
-        // dispatch(removePost(post.id))
-        dispatch({
-            type : REMOVE_POST_REQUEST,
-            data : post.id,
-        });
+        dispatch(removePostAction(post.id))
+        // dispatch({
+        //     type : REMOVE_POST_REQUEST,
+        //     data : post.id,
+        // });
     }, []);
 
     return (

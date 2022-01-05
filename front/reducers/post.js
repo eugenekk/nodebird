@@ -1,41 +1,14 @@
 import shortId from 'shortid';
 import produce from 'immer';
+import faker from 'faker';
 
 export const initialState = {
-    mainPosts : [{
-        id : 1,
-        User : {
-            id : 1,
-            nickname : '밀키우',
-        },
-        content : '첫번째 게시글 #해시태그 #익스프레스',
-        Images : [{
-            id : shortId.generate(),
-            src : "https://news.hmgjournal.com/images_n/contents/cons/2020/201214_christmas_01.jpg", 
-        }, {
-            id : shortId.generate(),
-            src : "https://news.hmgjournal.com/images_n/contents/cons/2020/201214_christmas_01.jpg", 
-        }, {
-            id : shortId.generate(),
-            src : "https://news.hmgjournal.com/images_n/contents/cons/2020/201214_christmas_01.jpg", 
-        },],
-        Comments : [{
-            id : shortId.generate(),
-            User : {
-                id : shortId.generate(),
-                nickname : '울랄라',
-            },
-            content : '행복해보입니다'
-        }, {
-            id : shortId.generate(),
-            User : {
-                id : shortId.generate(),
-                nickname : '비건',
-            },
-            content : '아무튼 비건'
-        }]
-    }],
+    mainPosts : [],
     imagePaths : [],
+    hasMorePost : true, // 게시글 가져오기 시도
+    loadPostLoading : false, //게시글 로딩 중
+    loadPostDone : false,
+    loadPostError : null,
     addPostLoading : false, //게시글 업로드 중
     addPostDone : false,
     addPostError : null,
@@ -46,6 +19,30 @@ export const initialState = {
     addCommentDone : false,
     addCommentError : null,
 };
+
+export const generateDummyPost = (number) => Array(number).fill().map(() => ({
+    id : shortId.generate(),
+    User : {
+        id : shortId.generate(),
+        nickname : faker.name.findName(),
+    },
+    content : faker.lorem.paragraph(),
+    Images : [{
+        src : faker.image.image(),
+    }],
+    Comments : [{
+        User : {
+            id : shortId.generate(),
+            nickname : faker.name.findName()
+        },
+        content : faker.lorem.sentence(),
+    }]
+}));
+
+
+export const LOAD_POST_REQUEST = 'LOAD_POST_REQUEST';
+export const LOAD_POST_SUCCESS = 'LOAD_POST_SUCCESS';
+export const LOAD_POST_FAILURE = 'LOAD_POST_FAILURE';
 
 export const ADD_POST_REQUEST = 'ADD_POST_REQUEST';
 export const ADD_POST_SUCCESS = 'ADD_POST_SUCCESS';
@@ -59,15 +56,15 @@ export const ADD_COMMENT_REQUEST = 'ADD_COMMENT_REQUEST';
 export const ADD_COMMENT_SUCCESS = 'ADD_COMMENT_SUCCESS';
 export const ADD_COMMENT_FAILURE = 'ADD_COMMENT_FAILURE';
 
-export const addPost = (data) => ({
+export const addPostAction = (data) => ({
     type : ADD_POST_REQUEST,
     data,
 })
-export const removePost = (data) => ({
+export const removePostAction = (data) => ({
     type : REMOVE_POST_REQUEST,
     data,
 })
-export const addComment = (data) => ({
+export const addCommentAction = (data) => ({
     type : ADD_COMMENT_REQUEST,
     data,
 })
@@ -96,6 +93,22 @@ const reducer = (state = initialState, action) => {
     // 불변성을 지켜주는 immer 사용 (draft)
     return produce(state, (draft) =>{
         switch (action.type) {
+            // 게시글 로딩
+            case LOAD_POST_REQUEST:
+                draft.loadPostLoading = true;
+                draft.loadPostDone = false;
+                draft.loadPostError = null;
+                break;
+            case LOAD_POST_SUCCESS:
+                draft.loadPostLoading = false;
+                draft.loadPostDone = true;
+                draft.mainPosts = action.data.concat(draft.mainPosts);
+                draft.hasMorePost = draft.mainPosts.length < 50; // 50개 이상이면 더 안가져옴
+                break;
+            case LOAD_POST_FAILURE:
+                draft.loadPostLoading = false;
+                draft.loadPostError = action.error;
+                break;
             // 게시글 추가
             case ADD_POST_REQUEST:
                 draft.addPostLoading = true;

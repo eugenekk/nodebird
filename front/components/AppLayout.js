@@ -1,4 +1,5 @@
 // 특정 페이지 공통 내용(레이아웃)
+import React from 'react';
 import PropTypes from 'prop-types';
 import Link from 'next/link';
 import { Menu, Input, Row, Col } from 'antd';
@@ -27,7 +28,7 @@ const SearchInput = styled(Input.Search)`
 
 const AppLayout = ({children}) => {
     const { me } = useSelector((state) => state.user )
-
+    
     return (
         <div>
             <Global />

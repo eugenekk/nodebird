@@ -2,7 +2,7 @@ import { Button, Form, Input } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import useInput from '../hooks/useInput';
-import { ADD_POST_REQUEST  } from '../reducers/post';
+import { ADD_POST_REQUEST, addPostAction  } from '../reducers/post';
 
 
 const PostForm = () => {
@@ -17,13 +17,8 @@ const PostForm = () => {
     }, [addPostDone]);
 
     const onSubmit = useCallback(() => {
-        dispatch({
-          type: ADD_POST_REQUEST,
-          data: {
-            text,
-          },
-        });
-      }, []);
+        dispatch(addPostAction(text))
+      }, [text]);
 
     //이미지 업로드
     const imageInput = useRef();

@@ -136,7 +136,7 @@ const reducer = (state = initialState, action) => {
             break;
         // 게시글 추가 (내 정보 업데이트)
         case ADD_POST_TO_ME:
-            draft.me.Post.unshift({ id : action.data });
+            draft.me.Posts.unshift({ id : action.data });
             break;
         // 게시글 삭제 (내 정보 업데이트)
         case REMOVE_POST_OF_ME:
