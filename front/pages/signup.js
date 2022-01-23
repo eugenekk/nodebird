@@ -1,18 +1,38 @@
 import AppLayout from "../components/AppLayout";
 import Head from "next/head";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import useInput from "../hooks/useInput";
 import styled from "styled-components";
 import { Form, Input, Checkbox, Button } from 'antd'; 
 import { useDispatch, useSelector } from "react-redux";
 import { signupRequestAction, SIGN_UP_REQUEST } from "../reducers/user";
+import Router from "next/router";
 
 const ErrorMessage = styled.div`
     color : red`;
 
 const Signup = () => {
     const dispatch = useDispatch();
-    const { signUpLoading } = useSelector((state) => state.user);
+    const { signUpLoading, signUpDone, signUpError, me } = useSelector((state) => state.user);
+
+    useEffect(() => {
+        if(me && me.id) {
+            Router.replace('/');
+        }
+    }, [me && me.id]);
+
+    useEffect(() => {
+        if(signUpDone) {
+            Router.replace('/');
+        }
+    }, [signUpDone]);
+
+    useEffect(() => {
+        if(signUpError) {
+            alert(signUpError);
+        }
+    }, [signUpError]);
+
 
     const [ email, onChangeEmail ] = useInput(''); //커스텀훅 사용
     const [ nickname, onChangeNickname ] = useInput('');

@@ -1,5 +1,5 @@
 import { Form, Input, Button } from 'antd';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import styled from 'styled-components';
 import useInput from '../hooks/useInput';
@@ -17,7 +17,13 @@ const LoginForm = () => {
     const dispatch = useDispatch();
     const [ email, onChangeEmail ] = useInput(''); //커스텀훅 사용
     const [ password, onChangePassword ] = useInput('');
-    const { logInLoading } = useSelector((state) => state.user);
+    const { logInLoading, logInError } = useSelector((state) => state.user);
+    
+    useEffect(() => {
+        if(logInError){
+            alert(logInError)
+        }
+    }, [logInError]);
 
     const onSubmitForm = useCallback(() => {
         console.log(email, password);
@@ -34,7 +40,7 @@ const LoginForm = () => {
             <div>
                 <label htmlFor='user-password'>비밀번호</label>
                 <br />
-                <Input name="user-password" value={password} onChange={onChangePassword} required />  
+                <Input name="user-password" type='password' value={password} onChange={onChangePassword} required />  
                 
             </div>
             <ButtonWrapper>

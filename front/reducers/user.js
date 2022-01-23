@@ -1,6 +1,9 @@
 import produce from "immer";
 
 export const initialState = {
+    loadMyInfoLoading : false, //로그인한 사용자 정보 시도 중
+    loadMyInfoDone : false,
+    loadMyInfoError : null,
     logInLoading : false, //로그인 시도 중
     logInDone : false,
     logInError : null,
@@ -13,10 +16,20 @@ export const initialState = {
     changeNicknameLoading : false, // 닉네임 변경 시도중
     changeNicknameDone : false,
     changeNicknameError : null,
+    followLoading : false, //팔로우 시도 중
+    followDone : false,
+    followError : null,
+    unfollowLoading : false, //언팔로우 시도 중
+    unfollowDone : false,
+    unfollowError : null,
     me : null,
     signUpData : {},
     loginData : {},
 };
+
+export const LOAD_MY_INFO_REQUEST = 'LOAD_MY_INFO_REQUEST'
+export const LOAD_MY_INFO_SUCCESS = 'LOAD_MY_INFO_SUCCESS'
+export const LOAD_MY_INFO_FAILURE = 'LOAD_MY_INFO_FAILURE'
 
 export const LOG_IN_REQUEST = 'LOG_IN_REQUEST'
 export const LOG_IN_SUCCESS = 'LOG_IN_SUCCESS'
@@ -67,15 +80,31 @@ export const logoutRequestAction = () => {
         type : LOG_OUT_REQUEST,
     }
 }
-export const signupRequestAction = () => {
+export const signupRequestAction = (data) => {
     return {
         type : SIGN_UP_REQUEST,
+        data
     }
 }
 
 const reducer = (state = initialState, action) => {
     return produce(state, (draft) => {
         switch (action.type) {
+        // 로그인 사용자 정보
+        case LOAD_MY_INFO_REQUEST:
+            draft.loadMyInfoLoading = true;
+            draft.loadMyInfoError = null;
+            draft.loadMyInfoDone = false;
+            break;
+        case LOAD_MY_INFO_SUCCESS:
+            draft.loadMyInfoLoading = false;
+            draft.loadMyInfoDone = true;
+            draft.me = action.data;
+            break;
+        case LOAD_MY_INFO_FAILURE:
+            draft.loadMyInfoLoading = false;
+            draft.loadMyInfoError = action.error;
+            break;
         // 로그인
         case LOG_IN_REQUEST:
             draft.logInLoading = true;
@@ -85,7 +114,7 @@ const reducer = (state = initialState, action) => {
         case LOG_IN_SUCCESS:
             draft.logInLoading = false;
             draft.logInDone = true;
-            draft.me = dummyUser(action.data)
+            draft.me = action.data;
             break;
         case LOG_IN_FAILURE:
             draft.logInLoading = false;
@@ -133,6 +162,36 @@ const reducer = (state = initialState, action) => {
         case CHANGE_NICKNAME_FAILURE:
             draft.changeNicknameLoading = false;
             draft.changeNicknameError = action.error;
+            break;
+        // 팔로우
+        case FOLLOW_REQUEST:
+            draft.followLoading = true;
+            draft.followError = null;
+            draft.followDone = false;
+            break;
+        case FOLLOW_SUCCESS:
+            draft.followLoading = false;
+            draft.followDone = true;
+            draft.me.Followings.push({id : action.data})
+            break;
+        case FOLLOW_FAILURE:
+            draft.followLoading = false;
+            draft.followError = action.error;
+            break;
+        // 언팔로우
+        case UNFOLLOW_REQUEST:
+            draft.unfollowLoading = true;
+            draft.unfollowError = null;
+            draft.unfollowDone = false;
+            break;
+        case UNFOLLOW_SUCCESS:
+            draft.unfollowLoading = false;
+            draft.unfollowDone = true;
+            draft.me.Followings = draft.me.Followings.filter((v) => v.id !== action.data);
+            break;
+        case UNFOLLOW_FAILURE:
+            draft.unfollowLoading = false;
+            draft.unfollowError = action.error;
             break;
         // 게시글 추가 (내 정보 업데이트)
         case ADD_POST_TO_ME:
