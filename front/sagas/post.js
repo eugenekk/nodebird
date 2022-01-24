@@ -9,15 +9,14 @@ import shortid from "shortid";
 
 // 게시글 로드
 function loadPostAPI(data) {
-    return axios.post('/api/post')
+    return axios.get('/posts')
 }
 function* loadPost(action) {
     try{
-        // const result = yield call(addPostAPI, action.data);
-        // yield delay(1000)
+        const result = yield call(loadPostAPI, action.data);
         yield put({
             type : LOAD_POST_SUCCESS,
-            data : generateDummyPost(10),
+            data : result.data,
         })
     }catch(err) {
         yield put({
@@ -83,6 +82,7 @@ function* addComment(action) {
             data : result.data
         })
     }catch(err) {
+        console.error(err)
         yield put({
             type: ADD_COMMENT_FAILURE,
             data : err.response.data

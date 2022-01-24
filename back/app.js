@@ -1,5 +1,6 @@
 const express = require('express');
 const postRouter = require('./routes/post');
+const postsRouter = require('./routes/posts');
 const userRouter = require('./routes/user');
 const db = require('./models');
 const app = express();
@@ -9,6 +10,7 @@ const cookieParser = require('cookie-parser');
 const passportConfig = require('./passport/index');
 const passport = require('passport');
 const dotenv = require('dotenv');
+const morgan = require('morgan');
 
 db.sequelize.sync()
     .then(()=> {
@@ -35,16 +37,11 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(cookieParser(process.env.COOKIE_SECRET));
+app.use(morgan('dev'));
 
-app.get('/', (req, res) => {
-    res.send('hello epresee')
-})
 
-app.get('/', (req, res) => {
-    res.send('hello api')
-})
-
-app.use('/post', postRouter);
+app.use('/post', postRouter); // 게시글 한개에 대한 요청
+app.use('/posts', postsRouter); // 게시글 여러개 대한 요청
 app.use('/user', userRouter);
 
 
