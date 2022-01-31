@@ -1,8 +1,19 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path') // node에서 제공
+const fs = require('fs');
+
 const { Post, Image, Comment, User } = require('../models');
 const { isLoggedIn, isNotLoggedIn } = require('./middlewares'); // 사용자 로그인여부 확인하는 미들웨어
 
 const router = express.Router();
+
+try {
+    fs.accessSync('uploads');
+}catch(err) {
+    console.log("uploads 폴더가 없으므로 폴더를 생성합니다.");
+    fs.mkdirSync('uploads')
+}
 
 router.get('/', (req, res) => {
     res.json([
@@ -43,6 +54,26 @@ router.post('/', isLoggedIn, async (req, res, next) => {
         console.error(err);
         next(err);
     }
+})
+
+// 이미지 업로드
+const upload = multer({
+    storage : multer.diskStorage({ // 실습용 하드디스크 저장
+        destination(req, file, done) {
+            done(null, 'uploads');
+        },
+        filename(req, file, done) {
+            const ext = path.extname(file.originalname); // 확장자 추출(png)
+            const basename = path.basename(file.originalname, ext); // 눈길
+            done(null, basename + new Date().getTime() + ext); // 눈길1562123452.png
+        }
+    }),
+    limits : { fileSize : 20 * 1024 * 1024 } // 20MB
+})
+router.post('/images', isLoggedIn, upload.array('image'), async (req, res, next) => {  // multer는 모든 라우터에 미들웨어로 쓰지 않고, 라우터별로 개별적으로 넣어준다. 폼마다 필요할때만
+    console.log('req', req.files);
+    res.json(req.files.map((v) => v.filename));
+     
 })
 // 게시글 삭제
 router.delete('/:postId', isLoggedIn, async (req, res, next) => {
