@@ -11,6 +11,7 @@ const passportConfig = require('./passport/index');
 const passport = require('passport');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
+const path = require('path');
 
 db.sequelize.sync()
     .then(()=> {
@@ -27,6 +28,7 @@ app.use(cors({
     credentials : true, // 다른 포트로부터의 쿠키 받기 허용
 }));
 
+app.use('/', express.static(path.join(__dirname, 'uploads'))) //프론트가 uploads 폴더에 접근할 수 있도록 설정
 app.use(express.json()); // 프론트에서 보낸 json데이터를 req.body안에 넣어줌
 app.use(express.urlencoded({ extended : true })) // 프론트에서 보낸 form submit req.body에 넣기
 app.use(session({

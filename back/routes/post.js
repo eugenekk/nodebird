@@ -3,7 +3,7 @@ const multer = require('multer');
 const path = require('path') // node에서 제공
 const fs = require('fs');
 
-const { Post, Image, Comment, User } = require('../models');
+const { Post, Image, Comment, User, Hashtag } = require('../models');
 const { isLoggedIn, isNotLoggedIn } = require('./middlewares'); // 사용자 로그인여부 확인하는 미들웨어
 
 const router = express.Router();
@@ -23,12 +23,46 @@ router.get('/', (req, res) => {
     ])
 })
 
-router.post('/', isLoggedIn, async (req, res, next) => {
+
+// 이미지 업로드
+const upload = multer({
+    storage : multer.diskStorage({ // 실습용 하드디스크 저장
+        destination(req, file, done) {
+            done(null, 'uploads');
+        },
+        filename(req, file, done) {
+            const ext = path.extname(file.originalname); // 확장자 추출(png)
+            const basename = path.basename(file.originalname, ext); // 눈길
+            done(null, basename + '_' + new Date().getTime() + ext); // 눈길1562123452.png
+        }
+    }),
+    limits : { fileSize : 20 * 1024 * 1024 } // 20MB
+})
+// 게시글 & 이미지 업로드
+router.post('/', isLoggedIn, upload.none(), async (req, res, next) => {
     try {
+        const hashtag = req.body.content.match(/#[^\s#]+/g);
         const post = await Post.create({
             content : req.body.content,
             UserId : req.user.id, //passport deserialize user데이터
         });
+        if(hashtag) {
+            const result = await Promise.all(hashtag.map((tag) => Hashtag.findOrCreate({ 
+                where: {
+                    name : tag.slice(1).toLowerCase() 
+                }
+            }))); // result : [[노드, true], [react, false]]
+            await post.addHashtags(result.map((v) => v[0]));
+        }
+        if(req.body.image) {
+            if(Array.isArray(req.body.image)) { // image : [123.png, 456.png]
+                const images = await Promise.all(req.body.image.map((image) => Image.create({ src : image })));
+                await post.addImages(images);
+            } else { // 이미지 한개만 올리면 123.png
+                const image = await Image.create({ src : req.body.image });
+                await post.addImages(image);
+            }
+        }
         const fullPost = await Post.findOne({
             where : { id : post.id },
             include : [{
@@ -56,25 +90,11 @@ router.post('/', isLoggedIn, async (req, res, next) => {
     }
 })
 
-// 이미지 업로드
-const upload = multer({
-    storage : multer.diskStorage({ // 실습용 하드디스크 저장
-        destination(req, file, done) {
-            done(null, 'uploads');
-        },
-        filename(req, file, done) {
-            const ext = path.extname(file.originalname); // 확장자 추출(png)
-            const basename = path.basename(file.originalname, ext); // 눈길
-            done(null, basename + new Date().getTime() + ext); // 눈길1562123452.png
-        }
-    }),
-    limits : { fileSize : 20 * 1024 * 1024 } // 20MB
-})
 router.post('/images', isLoggedIn, upload.array('image'), async (req, res, next) => {  // multer는 모든 라우터에 미들웨어로 쓰지 않고, 라우터별로 개별적으로 넣어준다. 폼마다 필요할때만
     console.log('req', req.files);
     res.json(req.files.map((v) => v.filename));
-     
 })
+
 // 게시글 삭제
 router.delete('/:postId', isLoggedIn, async (req, res, next) => {
     try {

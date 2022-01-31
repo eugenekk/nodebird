@@ -2,7 +2,7 @@ import { Button, Form, Input } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import useInput from '../hooks/useInput';
-import { ADD_POST_REQUEST, addPostAction, UPLOAD_IMAGES_REQUEST  } from '../reducers/post';
+import { ADD_POST_REQUEST, addPostAction, UPLOAD_IMAGES_REQUEST, REMOVE_IMAGE } from '../reducers/post';
 
 
 const PostForm = () => {
@@ -17,8 +17,19 @@ const PostForm = () => {
     }, [addPostDone]);
 
     const onSubmit = useCallback(() => {
-        dispatch(addPostAction(text))
-      }, [text]);
+        if(!text || !text.trim()) {
+            return alert('게시글을 작성하세요')
+        }
+        const formData = new FormData();
+        imagePaths.forEach((i) => {
+            formData.append('image', i)
+        })
+        formData.append('content', text);
+        return dispatch({
+            type : ADD_POST_REQUEST,
+            data : formData,
+        })
+      }, [text, imagePaths]);
 
     //이미지 업로드
     const imageInput = useRef();
@@ -37,6 +48,13 @@ const PostForm = () => {
             data: imageFormData,
         });
     }, []);
+
+    const onRemoveImage = useCallback((index) => () => {
+        dispatch({
+            type : REMOVE_IMAGE,
+            data : index
+        })
+    });
 
     return (
         <Form style={{ margin : '10px 0 20px'}} encType='multipart/form-data' onFinish ={onSubmit}>
@@ -57,7 +75,7 @@ const PostForm = () => {
                     <div key={v} style= {{ display: 'inline-block'}}>
                         <img src={`http://localhost:3065/${v}`} style={{width:'200px'}} alt={v}/> 
                         <div>
-                            <Button>제거</Button>
+                            <Button onClick={onRemoveImage(i)}>제거</Button>
                         </div>
                     </div>
                 ))}
