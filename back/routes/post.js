@@ -165,6 +165,76 @@ router.post('/:postId/comment', isLoggedIn, async (req, res, next) => {
     };
 })
 
+
+router.post('/:postId/retweet', isLoggedIn, async (req, res, next) => {
+    try{
+        //게시글 존재하는 지 확인
+        const post = await Post.findOne({
+            where : {
+                id : req.params.postId
+            },
+            inclue : [{
+                model : Post,
+                as : 'Retweet'
+            }]
+        });
+        if(!post) {
+            return res.status(403).send('존재하지 않는 게시글입니다.');
+        }
+        if(req.user.id === post.UserId || (post.Retweet && post.Retweet.UserId === req.usee.id)) {
+            return res.status(403).send('자신의 글은 리트윗할 수 없습니다.')
+        }
+        const retweetTargetid = post.RetweetId || post.id;
+        const exPost = await Post.findOne({ // 내가 이미 리트윗했는지 찾기
+            where : {
+                UserId : req.user.id,
+                RetweetId : retweetTargetid,
+            }
+        })
+        if(exPost){
+            return res.status(403).send('이미 리트윗했습니다.')
+        }
+        const retweet = await Post.create({
+            UserId : req.user.id,
+            RetweetId : retweetTargetid,
+            content: 'retweet',
+        });
+        const retweetWithPrevPost = await Post.findOne({ // 내가 어떤 게시글을 리트윗했는지 데이터 추가
+            where : { id : retweet.id},
+            include : [{
+                model : Post, 
+                as : "Retweet",
+                include : [{
+                    model : User,
+                    attribute : ['id', 'nickname']
+                },{
+                    model : Image,
+                }]
+            },{
+                model : User,
+                attribute : ['id', 'nickname']
+            },{
+                model : Image,
+            }, {
+                model : Comment,
+                include : [{
+                    model : User,
+                    attribute : ['id', 'nickname']
+                }]
+            }, {
+                model : User,
+                as : 'Likers',
+                attribute : ['id']
+            }],
+        })
+        res.status(201).json(retweetWithPrevPost);
+    }catch(err) {
+        console.error(err);
+        next(err);
+    };
+})
+
+
 // 좋아요 
 router.patch('/:postId/like', isLoggedIn, async (req, res, next)=>{
     try {

@@ -27,6 +27,9 @@ export const initialState = {
     uploadImagesLoading : false, //이미지 업로드 중
     uploadImagesDone : false,
     uploadImagesError : null,
+    retweetLoading : false, //이미지 업로드 중
+    retweetDone : false,
+    retweetError : null,
 };
 
 export const LOAD_POST_REQUEST = 'LOAD_POST_REQUEST';
@@ -57,6 +60,10 @@ export const UPLOAD_IMAGES_REQUEST = 'UPLOAD_IMAGES_REQUEST';
 export const UPLOAD_IMAGES_SUCCESS = 'UPLOAD_IMAGES_SUCCESS';
 export const UPLOAD_IMAGES_FAILURE = 'UPLOAD_IMAGES_FAILURE';
 
+export const RETWEET_REQUEST = 'RETWEET_REQUEST';
+export const RETWEET_SUCCESS = 'RETWEET_SUCCESS';
+export const RETWEET_FAILURE = 'RETWEET_FAILURE';
+
 export const REMOVE_IMAGE = 'REMOVE_IMAGE'; //동기 액션 (프론트상에서만 지움: 서버와 통신 없음)
 
 export const addPostAction = (data) => ({
@@ -86,8 +93,8 @@ const reducer = (state = initialState, action) => {
             case LOAD_POST_SUCCESS:
                 draft.loadPostLoading = false;
                 draft.loadPostDone = true;
-                draft.mainPosts = action.data.concat(draft.mainPosts);
-                draft.hasMorePost = draft.mainPosts.length < 50; // 50개 이상이면 더 안가져옴
+                draft.mainPosts = draft.mainPosts.concat(action.data);
+                draft.hasMorePost = action.data.length === 10; // 불러온게 10개 미만이면 다음엔 안불러옴
                 break;
             case LOAD_POST_FAILURE:
                 draft.loadPostLoading = false;
@@ -193,6 +200,22 @@ const reducer = (state = initialState, action) => {
                 break;
             case REMOVE_IMAGE:
                 draft.imagePaths = draft.imagePaths.filter((v,i) => i !== action.data);
+                break;
+
+            // 리트윗
+            case RETWEET_REQUEST:
+                draft.retweetLoading = true;
+                draft.retweetDone = false;
+                draft.retweetError = null;
+                break;
+            case RETWEET_SUCCESS:
+                draft.retweetLoading = false;
+                draft.retweetDone = true;
+                draft.mainPosts.unshift(action.data);
+                break;
+            case RETWEET_FAILURE:
+                draft.retweetLoading = false;
+                draft.retweetError = action.error;
                 break;
             default:
                 break;
