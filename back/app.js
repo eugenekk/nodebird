@@ -2,6 +2,7 @@ const express = require('express');
 const postRouter = require('./routes/post');
 const postsRouter = require('./routes/posts');
 const userRouter = require('./routes/user');
+const hashtagRouter = require('./routes/hashtag');
 const db = require('./models');
 const app = express();
 const cors = require('cors');
@@ -45,6 +46,7 @@ app.use(morgan('dev'));
 app.use('/post', postRouter); // 게시글 한개에 대한 요청
 app.use('/posts', postsRouter); // 게시글 여러개 대한 요청
 app.use('/user', userRouter);
+app.use('/hashtag', hashtagRouter);
 
 
 // 가장 마지막에 next() 에러처리 미들웨어 내부적으로 존재(원할시 커스텀 가능)

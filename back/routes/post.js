@@ -91,7 +91,6 @@ router.post('/', isLoggedIn, upload.none(), async (req, res, next) => {
 })
 
 router.post('/images', isLoggedIn, upload.array('image'), async (req, res, next) => {  // multer는 모든 라우터에 미들웨어로 쓰지 않고, 라우터별로 개별적으로 넣어준다. 폼마다 필요할때만
-    console.log('req', req.files);
     res.json(req.files.map((v) => v.filename));
 })
 
@@ -267,6 +266,58 @@ router.delete('/:postId/like', isLoggedIn, async (req, res, next)=>{
         console.error(err);
         next(err)
     }
+})
+
+// 게시글 1개 불러오기(다이나믹 라우팅)
+router.get('/:postId', async (req, res, next) => { //GET /post/1
+    try{
+        //게시글 존재하는 지 확인
+        const post = await Post.findOne({
+            where : {
+                id : req.params.postId
+            },
+        });
+        if(!post) {
+            console.log('존재하지 않는 게시글')
+            return res.status(404).send('존재하지 않는 게시글입니다.');
+        }
+        const fullPost = await Post.findOne({ // 게시글 전체 정보
+            where : { id : post.id},
+            include : [{
+                model : Post, 
+                as : "Retweet",
+                include : [{
+                    model : User,
+                    attribute : ['id', 'nickname']
+                },{
+                    model : Image,
+                }]
+            },{
+                model : User,
+                attribute : ['id', 'nickname']
+            },{
+                model : User,
+                as : 'Likers',
+                attribute : ['id', 'nickname']
+            },{
+                model : Image,
+            }, {
+                model : Comment,
+                include : [{
+                    model : User,
+                    attribute : ['id', 'nickname']
+                }]
+            }, {
+                model : User,
+                as : 'Likers',
+                attribute : ['id']
+            }],
+        })
+        res.status(200).json(fullPost);
+    }catch(err) {
+        console.error(err);
+        next(err);
+    };
 })
 
 module.exports = router;

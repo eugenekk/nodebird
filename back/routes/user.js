@@ -1,33 +1,33 @@
 const express = require('express');
-const { User } = require('../models');
+const { User, Post, Image, Comment } = require('../models');
 const bcrypt = require('bcrypt');
 const passport = require('passport');
 const db = require('../models');
 const { isLoggedIn, isNotLoggedIn } = require('./middlewares'); // 사용자 로그인여부 확인하는 미들웨어
-
+const { Op } = require('sequelize');
 const router = express.Router();
 
 // 사용자 정보 불러오기
-router.get('/', isLoggedIn, async (req, res, next) => {
+router.get('/', isLoggedIn, async (req, res, next) => { 
     try{
         if(req.user) {
-            const user = await User.findOne({
-                where : {id : req.user.id},
-            });
+            // const user = await User.findOne({
+            //     where : {id : req.user.id},
+            // });
             const fullUserWithoutPassword = await User.findOne({ 
-                where : { id : user.id },
+                where : { id : req.user.id },
                 attributes : {
                     exclude : ['password']
                 },
                 include : [{
-                    model : db.Post,
+                    model : Post,
                     attributes : ['id']
                 },{
-                    model : db.User,
+                    model : User,
                     as : 'Followings',
                     attributes : ['id']
                 },{
-                    model : db.User,
+                    model : User,
                     as : 'Followers',
                     attributes : ['id']
                 }]
@@ -35,6 +35,43 @@ router.get('/', isLoggedIn, async (req, res, next) => {
             res.status(200).json(fullUserWithoutPassword)
         } else {
             res.status(200).json(null)
+        }
+    }catch(err){
+        console.error(err);
+        next(err)
+    }
+});
+
+// 특정 사용자 정보 불러오기
+router.get('/:id', async (req, res, next) => {  //GET /user/3
+    try{
+        const fullUserWithoutPassword = await User.findOne({ 
+            where : { id : req.params.id },
+            attributes : {
+                exclude : ['password']
+            },
+            include : [{
+                model : Post,
+                attributes : ['id']
+            },{
+                model : User,
+                as : 'Followings',
+                attributes : ['id']
+            },{
+                model : User,
+                as : 'Followers',
+                attributes : ['id']
+            }]
+        })
+
+        if(fullUserWithoutPassword) {
+            const data = fullUserWithoutPassword.toJSON();
+            data.Posts = data.Posts.length; // 개인정보 침해 예방
+            data.Followings = data.Followings.length;
+            data.Followers = data.Followers.length;
+            res.status(200).json(data)
+        } else {
+            res.status(404).send('존재하지 않는 사용자 입니다.')
         }
     }catch(err){
         console.error(err);
@@ -203,6 +240,53 @@ router.delete('/follower/:userId', isLoggedIn, async (req, res, next) => {
         next(err);
     }
 });
+
+// 특정 사용자의 게시글
+router.get('/:userId/posts', async (req, res, next) => { // GET /user/1/posts
+    try {
+        const where = { UserId : req.params.userId };
+        if (parseInt(req.query.lastId, 10)) { // 초기 로딩이 아닐 때
+          where.id = { [Op.lt]: parseInt(req.query.lastId, 10)}
+        } // 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1
+        const posts = await Post.findAll({
+          where,
+          limit: 10,
+          order: [
+            ['createdAt', 'DESC'],
+            [Comment, 'createdAt', 'DESC'],
+          ],
+          include: [{
+            model: User,
+            attributes: ['id', 'nickname'],
+          }, {
+            model: Image,
+          }, {
+            model: Comment,
+            include: [{
+              model: User,
+              attributes: ['id', 'nickname'],
+            }],
+          }, {
+            model: User, // 좋아요 누른 사람
+            as: 'Likers',
+            attributes: ['id'],
+          }, {
+            model: Post,
+            as: 'Retweet',
+            include: [{
+              model: User,
+              attributes: ['id', 'nickname'],
+            }, {
+              model: Image,
+            }]
+          }],
+        });
+        res.status(200).json(posts);
+      } catch (error) {
+        console.error(error);
+        next(error);
+      }
+    });
 
 
 router.post('/logout', isLoggedIn, (req, res) => {

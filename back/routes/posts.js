@@ -6,54 +6,48 @@ const router = express.Router();
 
 router.get('/', async (req, res, next) => { // GET /posts
     try {
-        console.log('req.query.lastId', req.query.lastId)
-        const where = {}
-        //초기 로딩이 아니면 (스크롤내려서 더 불러옴)
-        if(parseInt(req.query.lastId, 10)) {
-            where.id = { [Op.lt] : parseInt(req.query.lastId, 10)} // lastId 보다(lt) 작은 10개 불러오기
-        }
-        
-        // 초기 로딩일 때
+        const where = {};
+        if (parseInt(req.query.lastId, 10)) { // 초기 로딩이 아닐 때
+          where.id = { [Op.lt]: parseInt(req.query.lastId, 10)}
+        } // 21 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1
         const posts = await Post.findAll({
-            where,
-            // where : { id : lastId }, // (비추) offset : 0, // 시작기준점
-            limit : 10,
-            order : [
-                ['createdAt', 'DESC'], // 게시글 내림차순 정렬
-                [ Comment, 'createdAt', 'DESC'], // 댓글 내림차순 정렬
-            ], 
-            include : [{
-                model : User,
-                attribute :['id' ,'nickname'],
-            },{
-                model : Image,
-            },
-            {
-                model : Comment,
-                include : [{
-                    model : User,
-                    attribute :['id' ,'nickname'],
-                }]
-            },{
-                model : User, // 좋아요 누른 사람
-                as : 'Likers',
-                attribute :['id']
-            },{
-                model : Post, 
-                as : "Retweet",
-                include : [{
-                    model : User,
-                    attribute : ['id', 'nickname']
-                },{
-                    model : Image,
-                }]
+          where,
+          limit: 10,
+          order: [
+            ['createdAt', 'DESC'],
+            [Comment, 'createdAt', 'DESC'],
+          ],
+          include: [{
+            model: User,
+            attributes: ['id', 'nickname'],
+          }, {
+            model: Image,
+          }, {
+            model: Comment,
+            include: [{
+              model: User,
+              attributes: ['id', 'nickname'],
             }],
-        })
+          }, {
+            model: User, // 좋아요 누른 사람
+            as: 'Likers',
+            attributes: ['id'],
+          }, {
+            model: Post,
+            as: 'Retweet',
+            include: [{
+              model: User,
+              attributes: ['id', 'nickname'],
+            }, {
+              model: Image,
+            }]
+          }],
+        });
         res.status(200).json(posts);
-
-    } catch(err) {
-        console.error(err)
-        next(err)
-    }
-})
+      } catch (error) {
+        console.error(error);
+        next(error);
+      }
+    });
+    
 module.exports = router;

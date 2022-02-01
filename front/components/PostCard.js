@@ -6,7 +6,7 @@ import PostImages from './PostImages';
 import { useCallback, useEffect, useState } from 'react';
 import CommentForm from './CommentForm';
 import PostCardContent from './PostCardContent';
-import { REMOVE_POST_REQUEST, LIKE_POST_REQUEST, UNLIKE_POST_REQUEST,removePostAction, RETWEET_REQUEST} from '../reducers/post';
+import { REMOVE_POST_REQUEST, LIKE_POST_REQUEST, UNLIKE_POST_REQUEST, RETWEET_REQUEST} from '../reducers/post';
 import FollowButton from './FollowButton';
 
 const PostCard = ({ post }) =>{
@@ -43,7 +43,10 @@ const PostCard = ({ post }) =>{
         if(!id) {
             return alert('로그인이 필요합니다.')
         }
-        return dispatch(removePostAction(post.id))
+        return dispatch({
+            type : REMOVE_POST_REQUEST,
+            data : post.id
+        })
     }, []);
 
     const onRetweet = useCallback(() => {

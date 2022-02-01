@@ -2,7 +2,7 @@ import { Button, Form, Input } from 'antd';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import useInput from '../hooks/useInput';
-import { ADD_POST_REQUEST, addPostAction, UPLOAD_IMAGES_REQUEST, REMOVE_IMAGE } from '../reducers/post';
+import { ADD_POST_REQUEST, UPLOAD_IMAGES_REQUEST, REMOVE_IMAGE } from '../reducers/post';
 
 
 const PostForm = () => {
@@ -38,7 +38,6 @@ const PostForm = () => {
     }, [imageInput.current]);
 
     const onChangeImages = useCallback((e) => {
-        console.log('images', e.target.files);
         const imageFormData = new FormData();
         [].forEach.call(e.target.files, (f) => {
             imageFormData.append('image', f);
