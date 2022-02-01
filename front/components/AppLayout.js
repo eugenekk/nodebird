@@ -51,9 +51,6 @@ const AppLayout = ({children}) => {
                     onChange={onChangeSearchInput}
                     onSearch={onSearch}
                 />
-                <Menu.Item key="/signup">
-                    <Link href="/signup"><a>회원가입</a></Link>
-                </Menu.Item>
             </Menu>
             
             <Row gutter={8}>

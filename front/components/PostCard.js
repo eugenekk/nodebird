@@ -9,7 +9,8 @@ import CommentForm from './CommentForm';
 import PostCardContent from './PostCardContent';
 import { REMOVE_POST_REQUEST, LIKE_POST_REQUEST, UNLIKE_POST_REQUEST, RETWEET_REQUEST} from '../reducers/post';
 import FollowButton from './FollowButton';
-
+import moment from 'moment';
+moment.locale('ko');
 
 const PostCard = ({ post }) =>{
     const dispatch = useDispatch();
@@ -91,6 +92,7 @@ const PostCard = ({ post }) =>{
                 {/* 리트윗 게시글일 경우 표시 */}
                 {post.RetweetId && post.Retweet ? (
                     <Card cover={post.Retweet.Images[0] && <PostImages images={post.Retweet.Images} />}>
+                        <div style={{float : 'right'}}>{moment(post.createdAt).format('YYYY.MM.DD')}</div>
                         <Card.Meta
                             avatar={(
                                 <Link href={`/user/${post.Retweet.User.id}`}><a>
@@ -102,6 +104,8 @@ const PostCard = ({ post }) =>{
                         />
                     </Card>
                 ) : (
+                    <>
+                    <div style={{float : 'right'}}>{moment(post.createdAt).format('YYYY.MM.DD')}</div>
                     <Card.Meta
                         avatar={(
                             <Link href={`/user/${post.User.id}`}><a>
@@ -111,6 +115,7 @@ const PostCard = ({ post }) =>{
                         title ={post.User.nickname}
                         description={<PostCardContent postData = {post.content}/>}
                     />
+                    </>
                 )}
                 
             </Card>
