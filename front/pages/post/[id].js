@@ -9,6 +9,7 @@ import PostCard from "../../components/PostCard";
 import { useSelector } from "react-redux";
 import Head from "next/head";
 import { useEffect } from "react";
+import { Router } from "next/router";
 
 const Post = () => {
     const router = useRouter();
@@ -19,11 +20,13 @@ const Post = () => {
     //     return <div>로딩중</div>
     // }
 
+
     useEffect(() => {
         if(loadPostError){
             alert(loadPostError)
         }
     }, [loadPostError]);
+
 
     return (
         <AppLayout>

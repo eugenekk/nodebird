@@ -42,42 +42,66 @@ router.get('/', isLoggedIn, async (req, res, next) => {
     }
 });
 
-// 특정 사용자 정보 불러오기
-router.get('/:id', async (req, res, next) => {  //GET /user/3
+router.post('/', isNotLoggedIn, async (req, res, next) => {
     try{
-        const fullUserWithoutPassword = await User.findOne({ 
-            where : { id : req.params.id },
-            attributes : {
-                exclude : ['password']
-            },
-            include : [{
-                model : Post,
-                attributes : ['id']
-            },{
-                model : User,
-                as : 'Followings',
-                attributes : ['id']
-            },{
-                model : User,
-                as : 'Followers',
-                attributes : ['id']
-            }]
+        const exUser = await User.findOne({
+            where: {
+                email : req.body.email,
+            }
         })
-
-        if(fullUserWithoutPassword) {
-            const data = fullUserWithoutPassword.toJSON();
-            data.Posts = data.Posts.length; // 개인정보 침해 예방
-            data.Followings = data.Followings.length;
-            data.Followers = data.Followers.length;
-            res.status(200).json(data)
-        } else {
-            res.status(404).send('존재하지 않는 사용자 입니다.')
+        if(exUser) {
+            return res.status(403).send('이미 사용 중인 아이디 입니다.') // 4XX : 보내는쪽의 잘못, 
         }
-    }catch(err){
+        const hashedPassword = await bcrypt.hash(req.body.password, 12);
+        await User.create({
+            email : req.body.email,
+            nickname : req.body.nickname,
+            password : hashedPassword,
+        });
+        res.status(201).send('ok'); // 201 잘 생성됨
+    }catch(err) {
+        console.error(err);
+        next(err); //에러 한방에 처리(?) 5XX : 서버쪽의 잘못
+    }
+})
+
+//프로필 - 팔로워목록
+router.get('/followers', isLoggedIn, async (req, res, next) => {
+    try {
+        const user = await User.findOne({
+            where : { id : req.user.id }
+        })
+        if(!user) {
+            res.status(403).send("존재하지 않는 사용자 입니다.")
+        }
+        const followers = await user.getFollowers({
+            limit : parseInt(req.query.limit, 10),
+        });
+        res.status(200).json(followers);
+    } catch (err) {
         console.error(err);
         next(err)
     }
-});
+})
+
+//프로필 - 팔로잉목록
+router.get('/followings', isLoggedIn, async (req, res, next) => {
+    try {
+        const user = await User.findOne({
+            where : { id : req.user.id }
+        })
+        if(!user) {
+            res.status(403).send("존재하지 않는 사용자 입니다.")
+        }
+        const followings = await user.getFollowings({
+            limit : parseInt(req.query.limit, 10),
+        });
+        res.status(200).json(followings);
+    } catch (err) {
+        console.error(err);
+        next(err)
+    }
+})
 
 router.post('/login', isNotLoggedIn, (req, res, next) => { // 미들웨어 확장
     passport.authenticate('local', (err, user, info) => {
@@ -116,29 +140,6 @@ router.post('/login', isNotLoggedIn, (req, res, next) => { // 미들웨어 확�
 });
 
 
-router.post('/', isNotLoggedIn, async (req, res, next) => {
-    try{
-        const exUser = await User.findOne({
-            where: {
-                email : req.body.email,
-            }
-        })
-        if(exUser) {
-            return res.status(403).send('이미 사용 중인 아이디 입니다.') // 4XX : 보내는쪽의 잘못, 
-        }
-        const hashedPassword = await bcrypt.hash(req.body.password, 12);
-        await User.create({
-            email : req.body.email,
-            nickname : req.body.nickname,
-            password : hashedPassword,
-        });
-        res.status(201).send('ok'); // 201 잘 생성됨
-    }catch(err) {
-        console.error(err);
-        next(err); //에러 한방에 처리(?) 5XX : 서버쪽의 잘못
-    }
-})
-
 // 닉네임 변경
 router.patch('/nickname', isLoggedIn, async (req, res, next) => {
     try {
@@ -159,6 +160,67 @@ router.patch('/nickname', isLoggedIn, async (req, res, next) => {
         next(err);
     }
 });
+
+router.post('/logout', isLoggedIn, (req, res) => {
+    req.logout();
+    req.session.destroy();
+    res.send('ok')
+});
+
+// 나를 팔로우하는 사람을 차단
+router.delete('/follower/:userId', isLoggedIn, async (req, res, next) => {
+    try {
+        const user = await User.findOne({
+            where : { id : req.params.userId } // 나를 팔로우하는 사람
+        })
+        if(!user) {
+            res.status(403).send("존재하지 않는 사용자 입니다.")
+        }
+        await user.removeFollowings(req.user.id)
+        res.status(200).json({ UserId : parseInt(req.params.userId, 10 ) })
+    } catch(err) {
+        console.error(err);
+        next(err);
+    }
+});
+
+// 특정 사용자 정보 불러오기
+router.get('/:id', async (req, res, next) => {  //GET /user/3
+    try{
+        const fullUserWithoutPassword = await User.findOne({ 
+            where : { id : req.params.id },
+            attributes : {
+                exclude : ['password']
+            },
+            include : [{
+                model : Post,
+                attributes : ['id']
+            },{
+                model : User,
+                as : 'Followings',
+                attributes : ['id']
+            },{
+                model : User,
+                as : 'Followers',
+                attributes : ['id']
+            }]
+        })
+
+        if(fullUserWithoutPassword) {
+            const data = fullUserWithoutPassword.toJSON();
+            data.Posts = data.Posts.length; // 개인정보 침해 예방
+            data.Followings = data.Followings.length;
+            data.Followers = data.Followers.length;
+            res.status(200).json(data)
+        } else {
+            res.status(404).send('존재하지 않는 사용자 입니다.')
+        }
+    }catch(err){
+        console.error(err);
+        next(err)
+    }
+});
+
 // 팔로우
 router.patch('/:userId/follow', isLoggedIn, async (req, res, next) => {
     try {
@@ -191,55 +253,7 @@ router.delete('/:userId/follow', isLoggedIn, async (req, res, next) => {
         next(err);
     }
 });
-//프로필 - 팔로워목록
-router.get('/followers', isLoggedIn, async (req, res, next) => {
-    try {
-        const user = await User.findOne({
-            where : { id : req.user.id }
-        })
-        if(!user) {
-            res.status(403).send("존재하지 않는 사용자 입니다.")
-        }
-        const followers = await user.getFollowers();
-        res.status(200).json(followers);
-    } catch (err) {
-        console.error(err);
-        next(err)
-    }
-})
-//프로필 - 팔로잉목록
-router.get('/followings', isLoggedIn, async (req, res, next) => {
-    try {
-        const user = await User.findOne({
-            where : { id : req.user.id }
-        })
-        if(!user) {
-            res.status(403).send("존재하지 않는 사용자 입니다.")
-        }
-        const followings = await user.getFollowings();
-        res.status(200).json(followings);
-    } catch (err) {
-        console.error(err);
-        next(err)
-    }
-})
 
-// 나를 팔로우하는 사람을 차단
-router.delete('/follower/:userId', isLoggedIn, async (req, res, next) => {
-    try {
-        const user = await User.findOne({
-            where : { id : req.params.userId } // 나를 팔로우하는 사람
-        })
-        if(!user) {
-            res.status(403).send("존재하지 않는 사용자 입니다.")
-        }
-        await user.removeFollowings(req.user.id)
-        res.status(200).json({ UserId : parseInt(req.params.userId, 10 ) })
-    } catch(err) {
-        console.error(err);
-        next(err);
-    }
-});
 
 // 특정 사용자의 게시글
 router.get('/:userId/posts', async (req, res, next) => { // GET /user/1/posts
@@ -288,11 +302,5 @@ router.get('/:userId/posts', async (req, res, next) => { // GET /user/1/posts
       }
     });
 
-
-router.post('/logout', isLoggedIn, (req, res) => {
-    req.logout();
-    req.session.destroy();
-    res.send('ok')
-});
 
 module.exports = router;

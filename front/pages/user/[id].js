@@ -10,13 +10,24 @@ import { LOAD_USER_POSTS_REQUEST } from '../../reducers/post';
 import wrapper from "../../store/configureStore";
 import axios from "axios";
 import { END } from "redux-saga";
+import { Router } from "next/router";
 
 const User = () => {
     const dispatch = useDispatch();
     const router = useRouter();
     const { id } = router.query;
-    const { mainPosts, hasMorePosts, loadPostsLoading } = useSelector((state) => state.post);
+    const { mainPosts, hasMorePosts, loadPostsLoading, loadPostsError } = useSelector((state) => state.post);
     const { userInfo } = useSelector((state)=> state.user);
+    const { loadUserError } = useSelector((state) => state.user);
+    
+    console.log('userInfo', userInfo);
+
+    useEffect(() => {
+        if(loadUserError){
+            alert(loadUserError)
+            Router.push('/');
+        }
+    }, [loadUserError]);
 
     useEffect(()=> {
         const onScroll = () => {

@@ -1,5 +1,5 @@
 // 특정 페이지 공통 내용(레이아웃)
-import React from 'react';
+import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import Link from 'next/link';
 import { Menu, Input, Row, Col } from 'antd';
@@ -9,6 +9,8 @@ import styled from 'styled-components';
 import UserProfile from '../components/UserProfile';
 import LoginForm from '../components/LoginForm';
 import { createGlobalStyle } from 'styled-components';
+import useInput from '../hooks/useInput';
+import Router from 'next/router';
 
 const Global = createGlobalStyle`
     .ant-row {
@@ -27,7 +29,11 @@ const SearchInput = styled(Input.Search)`
 `;
 
 const AppLayout = ({children}) => {
-    const { me } = useSelector((state) => state.user )
+    const { me } = useSelector((state) => state.user );
+    const [ searchInput, onChangeSearchInput ] = useInput();
+    const onSearch = useCallback(() => {
+        Router.push(`/hashtag/${searchInput}`)
+    }, [searchInput])
     
     return (
         <div>
@@ -39,7 +45,12 @@ const AppLayout = ({children}) => {
                 <Menu.Item key="/profile">
                     <Link href="/profile"><a>프로필</a></Link>
                 </Menu.Item>
-                <SearchInput enterButton/>
+                <SearchInput 
+                    enterButton
+                    value={searchInput}
+                    onChange={onChangeSearchInput}
+                    onSearch={onSearch}
+                />
                 <Menu.Item key="/signup">
                     <Link href="/signup"><a>회원가입</a></Link>
                 </Menu.Item>
