@@ -1,10 +1,10 @@
 import { Form, Input, Button } from 'antd';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import styled from 'styled-components';
 import useInput from '../hooks/useInput';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginRequestAction } from '../reducers/user';
+import { LOG_IN_REQUEST } from '../reducers/user';
 
 const ButtonWrapper = styled.div`
     margin-top : 10px;
@@ -17,11 +17,19 @@ const LoginForm = () => {
     const dispatch = useDispatch();
     const [ email, onChangeEmail ] = useInput(''); //커스텀훅 사용
     const [ password, onChangePassword ] = useInput('');
-    const { logInLoading } = useSelector((state) => state.user);
+    const { logInLoading, logInError } = useSelector((state) => state.user);
+    
+    useEffect(() => {
+        if(logInError){
+            alert(logInError)
+        }
+    }, [logInError]);
 
     const onSubmitForm = useCallback(() => {
-        console.log(email, password);
-        dispatch(loginRequestAction({email, password}));
+        dispatch({
+            type : LOG_IN_REQUEST,
+            data : {email, password}
+        })
     }, [email, password])
 
     return (
@@ -34,7 +42,7 @@ const LoginForm = () => {
             <div>
                 <label htmlFor='user-password'>비밀번호</label>
                 <br />
-                <Input name="user-password" value={password} onChange={onChangePassword} required />  
+                <Input name="user-password" type='password' value={password} onChange={onChangePassword} required />  
                 
             </div>
             <ButtonWrapper>

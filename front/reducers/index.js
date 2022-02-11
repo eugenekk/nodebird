@@ -16,19 +16,19 @@ const initialState = {
 
 
 // (이전상태, 액션) => 다음상태 를 만들어내는 함수
-const rootReducer = combineReducers({
-    //SSR을 위한 HYDRATE를 위한 index 추가
-    index : (state = {}, action) => {
-        switch (action.type) {
-            case HYDRATE:
-                console.log('HYDRATE', HYDRATE)
-                return {...state, ...action.payloads}
-            default:
-                return state;
-        };
-    },
-    user, 
-    post,
-});
+const rootReducer = (state, action) => {
+    switch (action.type) {
+        case HYDRATE:
+            console.log('HYDRATE', HYDRATE);
+            return action.payload;
+        default : {
+            const combinedReducer = combineReducers({
+                user,
+                post,
+            });
+            return combinedReducer(state, action);
+        }
+    }
+}
 
 export default rootReducer;
