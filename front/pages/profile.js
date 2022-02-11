@@ -11,7 +11,7 @@ const Profile = () => {
 
     useEffect(()=>{
         if(!(me && me.id)){
-            Router.push('/');
+            Router.push('/')
         }
     }, [me && me.id]);
 
